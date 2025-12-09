@@ -12,4 +12,8 @@ func Api() {
 
 	PostController := controllers.NewPostController()
 	facades.Route().Get("posts", PostController.Index)
+	facades.Route().Post("/post/create", PostController.Create)
+	facades.Route().Put("/post/update", PostController.Update)
+	facades.Route().Delete("/post/delete", PostController.Delete)
+
 }
