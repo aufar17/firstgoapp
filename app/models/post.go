@@ -1,12 +1,11 @@
 package models
 
-import (
-  "github.com/goravel/framework/database/orm"
-)
+import "github.com/goravel/framework/database/orm"
 
 type Post struct {
-  orm.Model
-  Title   string
-  Body string
-  Author string
+    orm.Model
+    Id   string `json:"id"`
+    Title   string `json:"title"`
+    Body    string `json:"body"`
+    Author  string `json:"author"`
 }

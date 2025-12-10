@@ -1,23 +1,28 @@
 package seeders
-	
+
 import (
-  "github.com/goravel/framework/facades"
-  "goravel/app/models"
-
+	"github.com/go-faker/faker/v4"
+	"github.com/goravel/framework/facades"
+	"goravel/app/models"
 )
-type PostSeeder struct {
-}
 
-// Signature The name and signature of the seeder.
+type PostSeeder struct{}
+
 func (s *PostSeeder) Signature() string {
 	return "PostSeeder"
 }
 
-// Run executes the seeder logic.
 func (s *PostSeeder) Run() error {
-	return facades.Orm().Query().Create(&models.Post{
-		Title: "First App with GO Lang and Goravel",
-		Body: "Goravel test first post ",
-		Author: "Super Pakcoy",
-	})
+	posts := make([]models.Post, 0, 1000)
+
+	for i := 0; i < 10000; i++ {
+		posts = append(posts, models.Post{
+			Title:  faker.Sentence(),
+			Body:   faker.Paragraph(),
+			Author: faker.Name(),
+		})
+	}
+
+	// Insert batch
+	return facades.Orm().Query().Create(&posts)
 }

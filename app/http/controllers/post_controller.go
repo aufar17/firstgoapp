@@ -2,11 +2,23 @@ package controllers
 
 import (
 	"strconv"
+	"bufio"
 
-	"github.com/goravel/framework/contracts/http"
-	"github.com/goravel/framework/facades"
+	 "encoding/json"
+
+    "github.com/goravel/framework/contracts/http"
+    "github.com/goravel/framework/facades"
 	"goravel/app/models"
 )
+
+
+type PostRow struct {
+    ID        uint   `json:"id"`
+    Title     string `json:"title"`
+    Body      string `json:"body"`
+    Author    string `json:"author"`
+    CreatedAt string `json:"created_at"`
+}
 
 type PostController struct {
 }
@@ -15,15 +27,57 @@ func NewPostController() *PostController {
 	return &PostController{}
 }
 
-// Index: List semua post
-func (r *PostController) Index(ctx http.Context) http.Response {
-	var posts []models.Post
-	facades.Orm().Query().Select("id", "title", "body", "author").Find(&posts)
 
-	return ctx.Response().Json(200, map[string]any{
-		"posts": posts,
-	})
+func (r *PostController) Index(ctx http.Context) http.Response {
+	var rows []PostRow
+
+	err := facades.DB().Select(
+		&rows,
+		"SELECT id, title, body, author, created_at FROM posts",
+	)
+
+	if err != nil {
+		return ctx.Response().Json(500, map[string]any{
+			"error": err.Error(),
+		})
+	}
+
+	// stream hasil ke client (pakai bufio writer untuk performa)
+	writer := ctx.Response().Writer()
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(200)
+
+	bw := bufio.NewWriter(writer)
+	defer bw.Flush()
+
+	// buka array JSON
+	bw.WriteByte('[')
+
+	for i, row := range rows {
+		if i != 0 {
+			bw.WriteByte(',')
+		}
+
+		// encode tiap row (map) jadi JSON
+		b, jErr := json.Marshal(row)
+		if jErr != nil {
+			// kalau marshal gagal, skip atau return error
+			_ = jErr
+			continue
+		}
+		bw.Write(b)
+	}
+
+	// tutup array JSON
+	bw.WriteByte(']')
+
+	// kembalikan nil karena respon sudah ditulis langsung
+	return nil
 }
+
+
+
+
 
 // Create: Buat post baru
 func (r *PostController) Create(ctx http.Context) http.Response {
